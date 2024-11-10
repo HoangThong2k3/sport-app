@@ -4,98 +4,110 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 
+Globals:
+  Function:
+    Timeout: 180
+    MemorySize: 128
+    Runtime: nodejs20.x
+    Architectures:
+      - x86_64
+    Tracing: Active
+    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    LoggingConfig:
+      LogFormat: JSON
+  Api:
+    TracingEnabled: true
+
 # Resources declares the AWS resources that you want to include in the stack
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
   # Each Lambda function is defined by properties:
   # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
 
-  # This is a Lambda function config associated with the source code: get-all-items.js
-  getAllItemsFunction:
-    Type: AWS::Serverless::Function
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
     Properties:
-      Handler: src/handlers/get-all-items.getAllItemsHandler
-      Runtime: nodejs20.x
-      Architectures:
-      - x86_64
-      MemorySize: 128
-      Timeout: 100
-      Description: A simple example includes a HTTP get method to get all items from
-        a DynamoDB table.
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /
-            Method: GET
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      UserPoolName: SportAppUserPool
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
 
-  # This is a Lambda function config associated with the source code: get-by-id.js
-  getByIdFunction:
-    Type: AWS::Serverless::Function
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
     Properties:
-      Handler: src/handlers/get-by-id.getByIdHandler
-      Runtime: nodejs20.x
-      Architectures:
-      - x86_64
-      MemorySize: 128
-      Timeout: 100
-      Description: A simple example includes a HTTP get method to get one item by
-        id from a DynamoDB table.
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /{id}
-            Method: GET
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      ClientName: SportAppPoolClient
+      UserPoolId: !Ref CognitoUserPool
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH # See also: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpoolclient.html
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      GenerateSecret: false
 
-  # This is a Lambda function config associated with the source code: put-item.js
-  putItemFunction:
+  RegisterUserFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/put-item.putItemHandler
-      Runtime: nodejs20.x
-      Architectures:
-      - x86_64
-      MemorySize: 128
-      Timeout: 100
-      Description: A simple example includes a HTTP post method to add one item to
-        a DynamoDB table.
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref SampleTable
+      Handler: src/handlers/auth/register-user.handler
+      Description: Register new user api
       Environment:
         Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
+          USER_POOL_ID: !Ref CognitoUserPool
+          CLIENT_ID: !Ref CognitoUserPoolClient
       Events:
         Api:
           Type: Api
           Properties:
-            Path: /
+            Path: /auth/register
             Method: POST
-  # Simple syntax to create a DynamoDB table with a single attribute primary key, more in
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlesssimpletable
+
+  EmailConfirmFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/auth/email-confirm.handler
+      Description: Confirm user email
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref CognitoUserPool
+          CLIENT_ID: !Ref CognitoUserPoolClient
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /auth/email-confirm
+            Method: POST
+
+  LoginUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/auth/login.handler
+      Description: Login user
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref CognitoUserPool
+          CLIENT_ID: !Ref CognitoUserPoolClient
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /auth/login
+            Method: POST
+
+  GetProdListFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/prod/get-prod-list.handler
+      Description: Get prod list with pagination
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref CognitoUserPool
+          CLIENT_ID: !Ref CognitoUserPoolClient
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /prod/list
+            Method: GET
 
   # DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}
   SampleTable:
@@ -126,11 +138,3 @@ Outputs:
     Description: API Gateway endpoint URL for Prod stage
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
 # # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Tracing: Active
-    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
-    LoggingConfig:
-      LogFormat: JSON
-  Api:
-    TracingEnabled: true

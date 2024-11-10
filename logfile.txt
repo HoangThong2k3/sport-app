@@ -1,0 +1,12 @@
+START RequestId: 3b8c1110-561e-409f-9d03-25d6768d8277 Version: $LATEST
+{"timestamp":"2024-11-10T15:48:12.038Z","level":"ERROR","message":{"errorType":"ImportModuleError","errorMessage":"Error: Cannot find module 'getProdList'\nRequire stack:\n- /var/runtime/index.mjs","stackTrace":["Runtime.ImportModuleError: Error: Cannot find module 'getProdList'","Require stack:","- /var/runtime/index.mjs","    at _loadUserApp (file:///var/runtime/index.mjs:1087:17)","    at async UserFunction.js.module.exports.load (file:///var/runtime/index.mjs:1119:21)","    at async start (file:///var/runtime/index.mjs:1282:23)","    at async file:///var/runtime/index.mjs:1288:1"]}}
+10 Nov 2024 15:48:12,182 [ERROR] (rapid) Init failed error=Runtime exited with error: exit status 129 InvokeID=
+10 Nov 2024 15:48:12,187 [ERROR] (rapid) Invoke failed error=Runtime exited with error: exit status 129 InvokeID=a601fec3-fa70-4746-909f-586a1e78bfa1
+10 Nov 2024 15:48:12,189 [ERROR] (rapid) Invoke DONE failed: Sandbox.Failure
+
+START RequestId: 9b70f65b-1c9f-4ffb-9043-becc0c75685b Version: $LATEST
+{"timestamp":"2024-11-10T15:49:47.947Z","level":"ERROR","message":{"errorType":"ImportModuleError","errorMessage":"Error: Cannot find module 'login'\nRequire stack:\n- /var/runtime/index.mjs","stackTrace":["Runtime.ImportModuleError: Error: Cannot find module 'login'","Require stack:","- /var/runtime/index.mjs","    at _loadUserApp (file:///var/runtime/index.mjs:1087:17)","    at async UserFunction.js.module.exports.load (file:///var/runtime/index.mjs:1119:21)","    at async start (file:///var/runtime/index.mjs:1282:23)","    at async file:///var/runtime/index.mjs:1288:1"]}}
+10 Nov 2024 15:49:48,106 [ERROR] (rapid) Init failed error=Runtime exited with error: exit status 129 InvokeID=
+10 Nov 2024 15:49:48,112 [ERROR] (rapid) Invoke failed error=Runtime exited with error: exit status 129 InvokeID=75d61967-f371-450d-bdac-db7df8d32648
+10 Nov 2024 15:49:48,114 [ERROR] (rapid) Invoke DONE failed: Sandbox.Failure
+
