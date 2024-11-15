@@ -109,6 +109,21 @@ Resources:
             Path: /prod/list
             Method: GET
 
+  ChangePassWordFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/auth/change-password.handler
+      Description: Change-password user
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref CognitoUserPool
+          CLIENT_ID: !Ref CognitoUserPoolClient
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /auth/change-password
+            Method: POST
   # DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}
   SampleTable:
     Type: AWS::Serverless::SimpleTable
